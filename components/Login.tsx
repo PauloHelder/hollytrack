@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Church, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -17,13 +17,13 @@ const Login = () => {
       <div className="hidden lg:flex w-1/2 bg-[#C0392B] p-12 flex-col justify-between relative overflow-hidden">
         {/* Gradient Overlay for texture */}
         <div className="absolute inset-0 bg-gradient-to-br from-holly-800 to-[#922B21] opacity-90"></div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-8">
-             <div className="bg-white p-2 rounded-lg">
-                <Church className="text-holly-800" size={28} />
-             </div>
-             <h1 className="text-3xl font-bold text-white tracking-tight">HollyTrack</h1>
+            <div className="bg-white p-2 rounded-lg">
+              <img src="/logo.png" alt="HollyTrack Logo" className="h-[28px] w-[28px] object-contain" />
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">HollyTrack</h1>
           </div>
         </div>
 
@@ -52,8 +52,8 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Email ou Nome de Usuário</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Digite seu email ou nome de usuário"
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-slate-800 focus:outline-none transition-all"
               />
@@ -62,8 +62,8 @@ const Login = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Senha</label>
               <div className="relative">
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   placeholder="Digite sua senha"
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-slate-800 focus:outline-none transition-all"
                 />
@@ -79,8 +79,8 @@ const Login = () => {
               </button>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-lg hover:bg-slate-700 transition-colors shadow-lg shadow-slate-800/20"
             >
               Entrar

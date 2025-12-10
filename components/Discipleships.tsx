@@ -3,6 +3,7 @@ import { Search, Filter, Plus, UsersRound, MapPin, Clock, MoreHorizontal } from 
 import { DiscipleshipGroup } from '../types';
 import DiscipleshipModal from './DiscipleshipModal';
 import DiscipleshipDetails from './DiscipleshipDetails';
+import DiscipleshipAttendanceModal from './DiscipleshipAttendanceModal';
 
 const mockGroups: DiscipleshipGroup[] = [
   { id: 1, name: 'Jovens em Cristo', leader: 'Pr. Roberto', meetingDay: 'Quinta-feira', meetingTime: '19:30', location: 'Salão Principal', membersCount: 25, targetAudience: 'Jovens' },
@@ -18,6 +19,8 @@ const Discipleships = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<DiscipleshipGroup | undefined>(undefined);
   const [viewingGroup, setViewingGroup] = useState<DiscipleshipGroup | null>(null);
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [selectedGroupForAttendance, setSelectedGroupForAttendance] = useState<DiscipleshipGroup | null>(null);
 
   const handleSaveGroup = (groupData: Omit<DiscipleshipGroup, 'id'>) => {
     if (editingGroup) {
@@ -45,6 +48,19 @@ const Discipleships = () => {
     if (confirm('Tem certeza que deseja excluir este grupo?')) {
       setGroups(groups.filter(g => g.id !== id));
     }
+  };
+
+  const handleAttendanceClick = (e: React.MouseEvent, group: DiscipleshipGroup) => {
+    e.stopPropagation();
+    setSelectedGroupForAttendance(group);
+    setIsAttendanceModalOpen(true);
+  };
+
+  const handleSaveAttendance = (data: { id?: number; date: string; lessonName: string; presentMemberIds: number[] }) => {
+    console.log("Saving attendance for group:", selectedGroupForAttendance?.name, data);
+    // Here you would typically save to the backend
+    setIsAttendanceModalOpen(false);
+    setSelectedGroupForAttendance(null);
   };
 
   if (viewingGroup) {
@@ -148,7 +164,7 @@ const Discipleships = () => {
                 Detalhes
               </button>
               <button
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => handleAttendanceClick(e, group)}
                 className="flex-1 px-3 py-2 bg-holly-50 text-holly-800 text-sm font-medium rounded-lg hover:bg-holly-100"
               >
                 Frequência
@@ -175,6 +191,18 @@ const Discipleships = () => {
         onSave={handleSaveGroup}
         group={editingGroup}
       />
+
+      {selectedGroupForAttendance && (
+        <DiscipleshipAttendanceModal
+          isOpen={isAttendanceModalOpen}
+          onClose={() => {
+            setIsAttendanceModalOpen(false);
+            setSelectedGroupForAttendance(null);
+          }}
+          onSave={handleSaveAttendance}
+          groupName={selectedGroupForAttendance.name}
+        />
+      )}
     </div>
   );
 };

@@ -22,33 +22,36 @@ const NewConvertDetails: React.FC<NewConvertDetailsProps> = ({ convert, onBack, 
             </button>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-orange-400 to-pink-500 h-32 relative">
-                    <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-bold border border-white/30">
-                        {convert.status}
-                    </div>
-                </div>
+                {/* Header Cover */}
+                <div className="h-32 bg-gradient-to-r from-holly-800 to-holly-600"></div>
 
                 <div className="px-8 pb-8">
                     <div className="relative flex justify-between items-end -mt-12 mb-8">
                         <div className="flex items-end gap-6">
-                            <div className="w-24 h-24 rounded-full border-4 border-white shadow-md bg-white overflow-hidden">
+                            <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
                                 <img
                                     src={convert.avatar}
                                     alt={convert.name}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                            <div className="mb-1">
-                                <h1 className="text-2xl font-bold text-gray-900">{convert.name}</h1>
-                                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                    <Heart size={14} className="text-pink-500" fill="currentColor" />
-                                    <span>Decisão em {convert.conversionDate}</span>
+                            <div className="mb-2">
+                                <h1 className="text-3xl font-bold text-gray-900">{convert.name}</h1>
+                                <div className="flex items-center gap-3 text-gray-500 mt-1">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-700">
+                                        {convert.status}
+                                    </span>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1">
+                                        <Heart size={14} className="text-pink-500" fill="currentColor" />
+                                        Decisão em {convert.conversionDate}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={onEdit}
-                            className="px-4 py-2 border border-gray-200 text-gray-700 bg-white rounded-lg hover:bg-gray-50 font-medium transition-colors shadow-sm"
+                            className="px-6 py-2.5 bg-holly-700 text-white rounded-lg hover:bg-holly-800 font-medium shadow-sm transition-colors"
                         >
                             Editar Dados
                         </button>

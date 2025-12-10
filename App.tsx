@@ -9,17 +9,23 @@ import Reports from './components/Reports';
 import Login from './components/Login';
 import UsersPage from './components/Users';
 import NewConverts from './components/NewConverts';
+import NewMembers from './components/NewMembers';
 import Discipleships from './components/Discipleships';
 import Departments from './components/Departments';
+import Settings from './components/Settings';
+
+import ClassRegistration from './components/ClassRegistration';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const isLoginPage = location.pathname === '/login';
+  const isRegistrationPage = location.pathname.startsWith('/register/');
 
-  if (isLoginPage) {
+  if (isLoginPage || isRegistrationPage) {
     return <>{children}</>;
   }
+
 
   return (
     <div className="flex min-h-screen bg-[#F3F4F6]">
@@ -45,9 +51,12 @@ const App = () => {
           <Route path="/departments" element={<Departments />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/new-converts" element={<NewConverts />} />
+          <Route path="/new-members" element={<NewMembers />} />
           <Route path="/discipleships" element={<Discipleships />} />
           <Route path="/communications" element={<Communications />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/register/class/:classId" element={<ClassRegistration />} />
           <Route path="*" element={<div className="p-8 text-center text-gray-500">Página em construção</div>} />
         </Routes>
       </Layout>

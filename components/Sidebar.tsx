@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Users, UserCog, Heart, UsersRound, Settings, Church, PlusCircle, FileBarChart, Send, User, Building2, X } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Heart, UsersRound, Settings, PlusCircle, FileBarChart, Send, User, Building2, X, GraduationCap } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
@@ -26,8 +26,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     <button
       onClick={() => handleNavigation(path)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mb-1 ${isActive(path)
-          ? 'bg-holly-600 text-white shadow-md'
-          : 'text-gray-200 hover:bg-holly-900/50 hover:text-white'
+        ? 'bg-holly-600 text-white shadow-md'
+        : 'text-gray-200 hover:bg-holly-900/50 hover:text-white'
         }`}
     >
       <Icon size={20} />
@@ -64,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-white p-2 rounded-xl shadow-lg">
-              <Church className="text-holly-800" size={26} />
+              <img src="/logo.png" alt="HollyTrack Logo" className="h-[26px] w-[26px] object-contain" />
             </div>
             <div className="flex flex-col">
               <h1 className="text-xl font-bold tracking-tight leading-none">HollyTrack</h1>
@@ -86,6 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavItem path="/members" icon={Users} label="Membros" />
           <NavItem path="/departments" icon={Building2} label="Departamentos" />
           <NavItem path="/discipleships" icon={UsersRound} label="Discipulados" />
+          <NavItem path="/new-members" icon={GraduationCap} label="Novos Membros" />
           <NavItem path="/new-converts" icon={Heart} label="Novos Convertidos" />
           <NavItem path="/users" icon={UserCog} label="Usuários" />
           <NavItem path="/communications" icon={Send} label="Comunicações" />

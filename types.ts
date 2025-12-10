@@ -14,7 +14,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Líder' | 'Secretaria';
+  role: string;
   avatar: string;
   lastAccess: string;
   status: 'Ativo' | 'Inativo';
