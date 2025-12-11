@@ -19,13 +19,12 @@ import ClassRegistration from './components/ClassRegistration';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const isLoginPage = location.pathname === '/login';
+  const isLoginPage = location.pathname === '/' || location.pathname === '/login';
   const isRegistrationPage = location.pathname.startsWith('/register/');
 
   if (isLoginPage || isRegistrationPage) {
     return <>{children}</>;
   }
-
 
   return (
     <div className="flex min-h-screen bg-[#F3F4F6]">
@@ -45,8 +44,9 @@ const App = () => {
     <Router>
       <Layout>
         <Routes>
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/members" element={<Members />} />
           <Route path="/departments" element={<Departments />} />
           <Route path="/users" element={<UsersPage />} />

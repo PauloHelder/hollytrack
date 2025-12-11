@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-          <NavItem path="/" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem path="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem path="/members" icon={Users} label="Membros" />
           <NavItem path="/departments" icon={Building2} label="Departamentos" />
           <NavItem path="/discipleships" icon={UsersRound} label="Discipulados" />
