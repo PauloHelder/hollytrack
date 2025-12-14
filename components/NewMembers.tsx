@@ -1,64 +1,69 @@
-
-import React, { useState } from 'react';
-import { Search, Plus, Calendar, GraduationCap, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Calendar, GraduationCap, Users, Edit2, QrCode, X, Copy, Share2 } from 'lucide-react';
 import NewMemberClassModal from './NewMemberClassModal';
 import NewMemberClassDetails, { NewMemberClass } from './NewMemberClassDetails';
+import { useNewMemberClasses } from '../hooks/useNewMemberClasses';
 
 const NewMembers = () => {
+    const { fetchClasses, createClass, updateClass, loading } = useNewMemberClasses();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingClass, setEditingClass] = useState<NewMemberClass | undefined>(undefined);
     const [viewingClass, setViewingClass] = useState<NewMemberClass | null>(null);
+    const [classes, setClasses] = useState<NewMemberClass[]>([]);
 
-    // Mock Data
-    const [classes, setClasses] = useState<NewMemberClass[]>([
-        {
-            id: 1,
-            name: 'Turma Agosto/2024',
-            startDate: '2024-08-01',
-            students: [
-                { id: 1, name: 'João Silva', email: 'joao@email.com' } as any,
-                { id: 2, name: 'Maria Souza', email: 'maria@email.com' } as any
-            ],
-            lessons: Array.from({ length: 8 }).map((_, i) => ({
-                id: i + 1,
-                title: `Aula ${i + 1}: Fundamentos ${i + 1}`,
-                date: new Date(2024, 7, 1 + (i * 7)).toISOString(),
-                completed: i < 2,
-                attendanceCount: i < 2 ? 2 : 0
-            }))
+    const [showQR, setShowQR] = useState(false);
+
+    useEffect(() => {
+        loadClasses();
+    }, []);
+
+    const loadClasses = async () => {
+        const data = await fetchClasses();
+        setClasses(data);
+    };
+
+    const handleSaveClass = async (data: { name: string; startDate: string; status: 'Em Andamento' | 'Concluída' | 'Cancelada' }) => {
+        try {
+            if (editingClass) {
+                await updateClass(editingClass.id, data);
+            } else {
+                await createClass(data.name, data.startDate, data.status);
+            }
+            await loadClasses();
+            setIsModalOpen(false);
+            setEditingClass(undefined);
+        } catch (error) {
+            alert('Erro ao salvar turma');
         }
-    ]);
+    };
 
-    const handleCreateClass = (data: { name: string; startDate: string }) => {
-        const startDateObj = new Date(data.startDate);
-        const newLessons = Array.from({ length: 8 }).map((_, i) => {
-            const lessonDate = new Date(startDateObj);
-            lessonDate.setDate(startDateObj.getDate() + (i * 7)); // Weekly lessons
+    const openEditModal = (e: React.MouseEvent, cls: NewMemberClass) => {
+        e.stopPropagation();
+        setEditingClass(cls);
+        setIsModalOpen(true);
+    };
 
-            return {
-                id: Date.now() + i,
-                title: `Aula ${i + 1}: Tema a definir`,
-                date: lessonDate.toISOString(),
-                completed: false,
-                attendanceCount: 0
-            };
-        });
-
-        const newClass: NewMemberClass = {
-            id: Date.now(),
-            name: data.name,
-            startDate: data.startDate,
-            students: [],
-            lessons: newLessons
-        };
-
-        setClasses([newClass, ...classes]);
-        setIsModalOpen(false);
+    const openCreateModal = () => {
+        setEditingClass(undefined);
+        setIsModalOpen(true);
     };
 
     if (viewingClass) {
-        return <NewMemberClassDetails classData={viewingClass} onBack={() => setViewingClass(null)} />;
+        return <NewMemberClassDetails classData={viewingClass} onBack={() => { setViewingClass(null); loadClasses(); }} />;
     }
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Em Andamento': return 'bg-green-100 text-green-700';
+            case 'Concluída': return 'bg-blue-100 text-blue-700';
+            case 'Cancelada': return 'bg-red-100 text-red-700';
+            default: return 'bg-gray-100 text-gray-700';
+        }
+    };
+
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/#/inscricao-novos-membros')}`;
+    const inviteLink = window.location.origin + '/#/inscricao-novos-membros';
 
     return (
         <div className="p-4 md:p-8 space-y-6">
@@ -68,7 +73,20 @@ const NewMembers = () => {
                     Novos Membros - Turmas
                 </h2>
                 <div className="flex items-center gap-3">
-                    {/* Search - Visual only for now */}
+                    <button
+                        onClick={() => setShowQR(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors text-sm"
+                    >
+                        <QrCode size={16} />
+                        QR Code
+                    </button>
+                    <button
+                        onClick={() => window.open('#/inscricao-novos-membros', '_blank')}
+                        className="flex items-center gap-2 px-4 py-2 bg-white text-holly-700 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors text-sm"
+                    >
+                        <GraduationCap size={16} />
+                        Página de Inscrição
+                    </button>
                     <div className="relative flex-1 md:flex-none">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
@@ -80,7 +98,7 @@ const NewMembers = () => {
                         />
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openCreateModal}
                         className="flex items-center gap-2 px-4 py-2 bg-holly-700 text-white rounded-lg hover:bg-holly-800 font-medium shadow-sm transition-colors"
                     >
                         <Plus size={18} />
@@ -91,18 +109,27 @@ const NewMembers = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {classes.map((cls) => (
+                {classes.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((cls) => (
                     <div
                         key={cls.id}
                         onClick={() => setViewingClass(cls)}
-                        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer group"
+                        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer group relative"
                     >
+                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={(e) => openEditModal(e, cls)}
+                                className="p-2 bg-white rounded-full shadow-sm border border-gray-200 text-gray-500 hover:text-holly-700 hover:border-holly-300 transition-colors"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                        </div>
+
                         <div className="flex justify-between items-start mb-4">
                             <div className="w-12 h-12 bg-holly-50 rounded-lg flex items-center justify-center text-holly-700 group-hover:bg-holly-100 transition-colors">
                                 <GraduationCap size={24} />
                             </div>
-                            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded">
-                                Em Andamento
+                            <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusColor(cls.status)}`}>
+                                {cls.status}
                             </span>
                         </div>
 
@@ -136,8 +163,53 @@ const NewMembers = () => {
             <NewMemberClassModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={handleCreateClass}
+                onSave={handleSaveClass}
+                classData={editingClass}
             />
+
+            {showQR && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <QrCode className="text-holly-700" size={24} />
+                                QR Code de Inscrição
+                            </h2>
+                            <button onClick={() => setShowQR(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-8 flex flex-col items-center gap-6">
+                            <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                                <img src={qrCodeUrl} alt="QR Code for Registration" className="w-56 h-56" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-gray-600 mb-4">
+                                    Escaneie para acessar a página de inscrição de turmas.
+                                </p>
+                                <div className="flex items-center gap-2 w-full bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={inviteLink}
+                                        className="flex-1 bg-transparent text-sm text-gray-600 focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(inviteLink);
+                                            alert('Link copiado!');
+                                        }}
+                                        className="p-1.5 text-holly-700 hover:bg-holly-100 rounded-md transition-colors"
+                                        title="Copiar Link"
+                                    >
+                                        <Copy size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

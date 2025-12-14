@@ -1,34 +1,28 @@
 
 import React, { useState } from 'react';
 import { X, Calendar, BookOpen, Check } from 'lucide-react';
+import { Member } from '../types';
 
 interface DiscipleshipAttendanceModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { id?: number; date: string; lessonName: string; presentMemberIds: number[] }) => void;
+    onSave: (data: { id?: number; date: string; lessonName: string; presentMemberIds: (string | number)[] }) => void;
     groupName: string;
-    initialData?: { id: number; date: string; lessonName: string; presentMemberIds: number[] } | null;
+    initialData?: { id: number; date: string; lessonName: string; presentMemberIds: (string | number)[] } | null;
+    members: (Member & { role?: string })[];
 }
-
-// Mock members for the attendance list
-const MOCK_MEMBERS = [
-    { id: 1, name: 'Participante 1', role: 'Membro Regular' },
-    { id: 2, name: 'Participante 2', role: 'Membro Regular' },
-    { id: 3, name: 'Participante 3', role: 'Membro Regular' },
-    { id: 4, name: 'Participante 4', role: 'Membro Regular' },
-    { id: 5, name: 'Participante 5', role: 'Membro Regular' },
-];
 
 const DiscipleshipAttendanceModal: React.FC<DiscipleshipAttendanceModalProps> = ({
     isOpen,
     onClose,
     onSave,
     groupName,
-    initialData
+    initialData,
+    members
 }) => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [lessonName, setLessonName] = useState('');
-    const [presentMemberIds, setPresentMemberIds] = useState<number[]>([]);
+    const [presentMemberIds, setPresentMemberIds] = useState<(string | number)[]>([]);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -46,7 +40,7 @@ const DiscipleshipAttendanceModal: React.FC<DiscipleshipAttendanceModalProps> = 
 
     if (!isOpen) return null;
 
-    const toggleMemberPresence = (memberId: number) => {
+    const toggleMemberPresence = (memberId: string | number) => {
         if (presentMemberIds.includes(memberId)) {
             setPresentMemberIds(presentMemberIds.filter(id => id !== memberId));
         } else {
@@ -55,10 +49,10 @@ const DiscipleshipAttendanceModal: React.FC<DiscipleshipAttendanceModalProps> = 
     };
 
     const toggleAll = () => {
-        if (presentMemberIds.length === MOCK_MEMBERS.length) {
+        if (presentMemberIds.length === members.length) {
             setPresentMemberIds([]);
         } else {
-            setPresentMemberIds(MOCK_MEMBERS.map(m => m.id));
+            setPresentMemberIds(members.map(m => m.id));
         }
     };
 
@@ -119,12 +113,12 @@ const DiscipleshipAttendanceModal: React.FC<DiscipleshipAttendanceModalProps> = 
                                 onClick={toggleAll}
                                 className="text-xs font-medium text-holly-700 hover:underline"
                             >
-                                {presentMemberIds.length === MOCK_MEMBERS.length ? 'Desmarcar Todos' : 'Marcar Todos'}
+                                {presentMemberIds.length === members.length ? 'Desmarcar Todos' : 'Marcar Todos'}
                             </button>
                         </div>
 
                         <div className="space-y-2 border rounded-xl p-2 max-h-60 overflow-y-auto custom-scrollbar bg-gray-50">
-                            {MOCK_MEMBERS.map(member => (
+                            {members.map(member => (
                                 <div
                                     key={member.id}
                                     onClick={() => toggleMemberPresence(member.id)}

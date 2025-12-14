@@ -11,12 +11,12 @@ interface NewConvertModalProps {
 }
 
 const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSave, convert }) => {
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phone: '',
         conversionDate: '',
-        mentor: '',
         status: 'Acompanhamento' as 'Acompanhamento' | 'Batizado' | 'Integrado',
         avatar: ''
     });
@@ -28,7 +28,6 @@ const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSa
                 email: convert.email,
                 phone: convert.phone,
                 conversionDate: convert.conversionDate,
-                mentor: convert.mentor,
                 status: convert.status,
                 avatar: convert.avatar
             });
@@ -38,9 +37,8 @@ const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSa
                 email: '',
                 phone: '',
                 conversionDate: new Date().toISOString().split('T')[0],
-                mentor: '',
                 status: 'Acompanhamento',
-                avatar: 'https://via.placeholder.com/150'
+                avatar: 'https://ui-avatars.com/api/?name=Novo+Convertido&background=random'
             });
         }
     }, [convert, isOpen]);
@@ -71,7 +69,7 @@ const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSa
                         <div className="relative group cursor-pointer">
                             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-100">
                                 <img
-                                    src={formData.avatar}
+                                    src={formData.avatar || 'https://ui-avatars.com/api/?name=User&background=random'}
                                     alt="Profile"
                                     className="w-full h-full object-cover"
                                 />
@@ -97,12 +95,11 @@ const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSa
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">E-mail</label>
+                        <label className="text-sm font-medium text-gray-700">E-mail (Opcional)</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="email"
-                                required
                                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -149,20 +146,6 @@ const NewConvertModal: React.FC<NewConvertModalProps> = ({ isOpen, onClose, onSa
                                 <option value="Batizado">Batizado</option>
                                 <option value="Integrado">Integrado</option>
                             </select>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Conselheiro/Mentor</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                placeholder="Quem está acompanhando?"
-                                value={formData.mentor}
-                                onChange={e => setFormData({ ...formData, mentor: e.target.value })}
-                            />
                         </div>
                     </div>
 

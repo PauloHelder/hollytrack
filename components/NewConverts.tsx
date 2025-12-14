@@ -1,15 +1,11 @@
+
 import React, { useState } from 'react';
 import { Search, Filter, Plus, Edit2, CheckCircle, Heart, ArrowRight } from 'lucide-react';
 import { NewConvert } from '../types';
 import NewConvertModal from './NewConvertModal';
 import NewConvertDetails from './NewConvertDetails';
-
-const mockConverts: NewConvert[] = [
-  { id: 1, name: 'Lucas Mendes', email: 'lucas.m@email.com', phone: '(11) 99999-1111', conversionDate: '2024-07-15', mentor: 'Carlos Pereira', status: 'Acompanhamento', avatar: 'https://ui-avatars.com/api/?name=Lucas+Mendes&background=random' },
-  { id: 2, name: 'Sofia Alves', email: 'sofia.a@email.com', phone: '(11) 98888-2222', conversionDate: '2024-07-10', mentor: 'Ana Silva', status: 'Acompanhamento', avatar: 'https://ui-avatars.com/api/?name=Sofia+Alves&background=random' },
-  { id: 3, name: 'Pedro Rocha', email: 'pedro.r@email.com', phone: '(11) 97777-3333', conversionDate: '2024-07-01', mentor: 'João Oliveira', status: 'Batizado', avatar: 'https://ui-avatars.com/api/?name=Pedro+Rocha&background=random' },
-  { id: 4, name: 'Mariana Lima', email: 'mari.l@email.com', phone: '(11) 96666-4444', conversionDate: '2024-06-20', mentor: 'Bruna Costa', status: 'Integrado', avatar: 'https://ui-avatars.com/api/?name=Mariana+Lima&background=random' },
-];
+import { useNewConverts } from '../hooks/useNewConverts';
+import { useMembers } from '../hooks/useMembers';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
@@ -25,20 +21,26 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 const NewConverts = () => {
+  const { converts, loading, addConvert, updateConvert, deleteConvert } = useNewConverts();
+  const { addMember } = useMembers(); // Used for migration
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [converts, setConverts] = useState<NewConvert[]>(mockConverts);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConvert, setEditingConvert] = useState<NewConvert | undefined>(undefined);
   const [viewingConvert, setViewingConvert] = useState<NewConvert | null>(null);
 
-  const handleSaveConvert = (convertData: Omit<NewConvert, 'id'>) => {
-    if (editingConvert) {
-      setConverts(converts.map(c => c.id === editingConvert.id ? { ...convertData, id: c.id } : c));
-    } else {
-      const newConvert = { ...convertData, id: converts.length + 1 };
-      setConverts([...converts, newConvert]);
+  const handleSaveConvert = async (convertData: Omit<NewConvert, 'id'>) => {
+    try {
+      if (editingConvert) {
+        await updateConvert(editingConvert.id, convertData);
+      } else {
+        await addConvert(convertData);
+      }
+      setIsModalOpen(false);
+      setEditingConvert(undefined);
+    } catch (error) {
+      alert('Erro ao salvar dados.');
     }
-    setEditingConvert(undefined);
   };
 
   const handleEditClick = (e: React.MouseEvent, convert: NewConvert) => {
@@ -52,11 +54,29 @@ const NewConverts = () => {
     setIsModalOpen(true);
   };
 
-  const handleConvertToMember = (convert: NewConvert) => {
-    if (confirm(`Deseja migrar ${convert.name} para a lista de Membros oficiais?`)) {
-      alert(`${convert.name} foi migrado com sucesso para Membros!`);
-      // In a real app, this would make an API call to create a Member and update/remove the NewConvert
-      setViewingConvert(null);
+  const handleConvertToMember = async (convert: NewConvert) => {
+    if (confirm(`Deseja migrar ${convert.name} para a lista de Membros oficiais? Isso removerá o registro desta lista.`)) {
+      try {
+        // Create member
+        await addMember({
+          name: convert.name,
+          email: convert.email,
+          phone: convert.phone,
+          avatar: convert.avatar,
+          joinDate: new Date().toISOString().split('T')[0], // Today as join date
+          status: 'Ativo',
+          groups: []
+        });
+
+        // Remove from new converts
+        await deleteConvert(convert.id);
+
+        alert(`${convert.name} foi migrado com sucesso para Membros!`);
+        setViewingConvert(null);
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao migrar para membros.');
+      }
     }
   };
 
@@ -106,16 +126,20 @@ const NewConverts = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-gray-500 text-xs font-semibold uppercase mb-1">Total este Mês</div>
-          <div className="text-2xl font-bold text-gray-900">15 Almas</div>
+          <div className="text-gray-500 text-xs font-semibold uppercase mb-1">Total Registrado</div>
+          <div className="text-2xl font-bold text-gray-900">{converts.length} Almas</div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <div className="text-gray-500 text-xs font-semibold uppercase mb-1">Aguardando Batismo</div>
-          <div className="text-2xl font-bold text-blue-600">8 Pessoas</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {converts.filter(c => c.status === 'Acompanhamento').length} Pessoas
+          </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-gray-500 text-xs font-semibold uppercase mb-1">Em Discipulado</div>
-          <div className="text-2xl font-bold text-yellow-600">12 Pessoas</div>
+          <div className="text-gray-500 text-xs font-semibold uppercase mb-1">Já Batizados</div>
+          <div className="text-2xl font-bold text-yellow-600">
+            {converts.filter(c => c.status === 'Batizado' || c.status === 'Integrado').length} Pessoas
+          </div>
         </div>
       </div>
 
@@ -126,54 +150,62 @@ const NewConverts = () => {
               <tr>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Decisão</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Conselheiro/Mentor</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {converts.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((convert) => (
-                <tr
-                  key={convert.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setViewingConvert(convert)}
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img src={convert.avatar} alt={convert.name} className="w-10 h-10 rounded-full object-cover" />
-                      <div>
-                        <div className="font-medium text-gray-900">{convert.name}</div>
-                        <div className="text-sm text-gray-500">{convert.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">{new Date(convert.conversionDate).toLocaleDateString()}</td>
-                  <td className="p-4 text-sm text-gray-600">{convert.mentor}</td>
-                  <td className="p-4 text-sm text-gray-600">{convert.phone}</td>
-                  <td className="p-4">
-                    <StatusBadge status={convert.status} />
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2 text-gray-400">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setViewingConvert(convert); }}
-                        className="p-1 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                        title="Ver Detalhes / Evoluir"
-                      >
-                        <ArrowRight size={16} />
-                      </button>
-                      <button
-                        onClick={(e) => handleEditClick(e, convert)}
-                        className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Editar"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">Carregando dados...</td>
                 </tr>
-              ))}
+              ) : converts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">Nenhum registro encontrado.</td>
+                </tr>
+              ) : (
+                converts.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((convert) => (
+                  <tr
+                    key={convert.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setViewingConvert(convert)}
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img src={convert.avatar} alt={convert.name} className="w-10 h-10 rounded-full object-cover bg-gray-100" />
+                        <div>
+                          <div className="font-medium text-gray-900">{convert.name}</div>
+                          <div className="text-sm text-gray-500">{convert.email || '-'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">{new Date(convert.conversionDate).toLocaleDateString()}</td>
+                    <td className="p-4 text-sm text-gray-600">{convert.phone}</td>
+                    <td className="p-4">
+                      <StatusBadge status={convert.status} />
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-2 text-gray-400">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewingConvert(convert); }}
+                          className="p-1 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                          title="Ver Detalhes / Evoluir"
+                        >
+                          <ArrowRight size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => handleEditClick(e, convert)}
+                          className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="Editar"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

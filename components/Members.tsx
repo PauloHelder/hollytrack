@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Filter, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, Filter, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { Member } from '../types';
 import MemberModal from './MemberModal';
 import MemberDetails from './MemberDetails';
-
-const mockMembers: Member[] = [
-  { id: 1, name: 'Ana Silva', email: 'ana.silva@email.com', avatar: 'https://picsum.photos/200/200', phone: '(11) 98765-4321', groups: ['Jovens', 'Coral'], joinDate: '2022-03-15', status: 'Ativo' },
-  { id: 2, name: 'Carlos Pereira', email: 'carlos.p@email.com', avatar: 'https://picsum.photos/201/201', phone: '(21) 91234-5678', groups: ['Voluntários'], joinDate: '2021-08-20', status: 'Ativo' },
-  { id: 3, name: 'Mariana Costa', email: 'mariana.c@email.com', avatar: 'https://picsum.photos/202/202', phone: '(31) 99988-7766', groups: ['Crianças'], joinDate: '2022-11-05', status: 'Inativo' },
-  { id: 4, name: 'João Oliveira', email: 'joao.o@email.com', avatar: 'https://picsum.photos/203/203', phone: '(41) 98877-6655', groups: ['Jovens'], joinDate: '2023-01-12', status: 'Ativo' },
-  { id: 5, name: 'Bruna Costa', email: 'bruna.costa@email.com', avatar: 'https://picsum.photos/204/204', phone: '(51) 97766-5544', groups: ['Coral', 'Voluntários'], joinDate: '2022-06-28', status: 'Ativo' },
-];
+import { useMembers } from '../hooks/useMembers';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -34,7 +27,7 @@ const Badge: React.FC<BadgeProps> = ({ children, color }) => {
 
 const Members = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [members, setMembers] = useState<Member[]>(mockMembers);
+  const { members, loading, addMember, updateMember, deleteMember } = useMembers(); // Using the hook
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | undefined>(undefined);
   const [viewingMember, setViewingMember] = useState<Member | null>(null);
@@ -47,14 +40,18 @@ const Members = () => {
     return 'gray';
   };
 
-  const handleSaveMember = (memberData: Omit<Member, 'id'>) => {
-    if (editingMember) {
-      setMembers(members.map(m => m.id === editingMember.id ? { ...memberData, id: m.id } : m));
-    } else {
-      const newMember = { ...memberData, id: members.length + 1 };
-      setMembers([...members, newMember]);
+  const handleSaveMember = async (memberData: Omit<Member, 'id'>) => {
+    try {
+      if (editingMember) {
+        await updateMember(editingMember.id, memberData);
+      } else {
+        await addMember(memberData);
+      }
+      setEditingMember(undefined);
+      setIsModalOpen(false);
+    } catch (error) {
+      alert('Erro ao salvar membro. Verifique o console.');
     }
-    setEditingMember(undefined);
   };
 
   const handleEditClick = (member: Member) => {
@@ -67,9 +64,13 @@ const Members = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = async (id: string | number) => {
     if (confirm('Tem certeza que deseja excluir este membro?')) {
-      setMembers(members.filter(m => m.id !== id));
+      try {
+        await deleteMember(id);
+      } catch (error) {
+        alert('Erro ao excluir membro.');
+      }
     }
   };
 
@@ -117,95 +118,113 @@ const Members = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="p-4 w-10">
-                  <input type="checkbox" className="rounded border-gray-300 text-holly-800 focus:ring-holly-800" />
-                </th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Grupos</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Inscrição</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase())).map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="p-4">
-                    <input type="checkbox" className="rounded border-gray-300 text-holly-800 focus:ring-holly-800" />
-                  </td>
-                  <td className="p-4 cursor-pointer" onClick={() => setViewingMember(member)}>
-                    <div className="flex items-center gap-3">
-                      <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
-                      <div>
-                        <div className="font-medium text-gray-900">{member.name}</div>
-                        <div className="text-sm text-gray-500">{member.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">{member.phone}</td>
-                  <td className="p-4">
-                    <div className="flex gap-1 flex-wrap">
-                      {member.groups.map(g => (
-                        <Badge key={g} color={getGroupColor(g)}>{g}</Badge>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">{new Date(member.joinDate).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${member.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
-                      {member.status}
-                    </div>
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2 text-gray-400">
-                      <button
-                        onClick={() => setViewingMember(member)}
-                        className="p-1 hover:text-holly-600 hover:bg-holly-50 rounded transition-colors"
-                        title="Ver Detalhes"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(member)}
-                        className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Editar"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(member.id)}
-                        className="p-1 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="p-4 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-sm text-gray-500">Mostrando {members.length} membros</span>
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-50">
-              <ChevronLeft size={16} />
-            </button>
-            <button className="w-8 h-8 rounded-lg bg-holly-50 text-holly-800 font-medium text-sm flex items-center justify-center border border-holly-100">1</button>
-            <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-              <ChevronRight size={16} />
-            </button>
+        {loading ? (
+          <div className="flex justify-center items-center p-12">
+            <Loader2 className="animate-spin text-holly-600" size={32} />
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="p-4 w-10">
+                      <input type="checkbox" className="rounded border-gray-300 text-holly-800 focus:ring-holly-800" />
+                    </th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Grupos</th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data de Inscrição</th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {members.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-gray-500">
+                        Nenhum membro encontrado.
+                      </td>
+                    </tr>
+                  ) : (
+                    members.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase())).map((member) => (
+                      <tr key={member.id} className="hover:bg-gray-50 transition-colors group">
+                        <td className="p-4">
+                          <input type="checkbox" className="rounded border-gray-300 text-holly-800 focus:ring-holly-800" />
+                        </td>
+                        <td className="p-4 cursor-pointer" onClick={() => setViewingMember(member)}>
+                          <div className="flex items-center gap-3">
+                            <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                            <div>
+                              <div className="font-medium text-gray-900">{member.name}</div>
+                              <div className="text-sm text-gray-500">{member.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-gray-600">{member.phone}</td>
+                        <td className="p-4">
+                          <div className="flex gap-1 flex-wrap">
+                            {member.groups && member.groups.length > 0 ? member.groups.map(g => (
+                              <Badge key={g} color={getGroupColor(g)}>{g}</Badge>
+                            )) : <span className="text-xs text-gray-400">-</span>}
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-gray-600">{new Date(member.joinDate).toLocaleDateString()}</td>
+                        <td className="p-4">
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${member.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                            {member.status}
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2 text-gray-400">
+                            <button
+                              onClick={() => setViewingMember(member)}
+                              className="p-1 hover:text-holly-600 hover:bg-holly-50 rounded transition-colors"
+                              title="Ver Detalhes"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleEditClick(member)}
+                              className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(member.id)}
+                              className="p-1 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Placeholder - functionality not implemented in hook yet */}
+            {members.length > 0 && (
+              <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-sm text-gray-500">Mostrando {members.length} membros</span>
+                <div className="flex items-center gap-2">
+                  <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-50" disabled>
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button className="w-8 h-8 rounded-lg bg-holly-50 text-holly-800 font-medium text-sm flex items-center justify-center border border-holly-100">1</button>
+                  <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled" disabled>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <MemberModal

@@ -1,24 +1,36 @@
-
-import React, { useState } from 'react';
-import { X, Calendar, Type } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Calendar, Type, Loader } from 'lucide-react';
+import { NewMemberClass } from './NewMemberClassDetails';
 
 interface NewMemberClassModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { name: string; startDate: string }) => void;
+    onSave: (data: { name: string; startDate: string; status: 'Em Andamento' | 'Concluída' | 'Cancelada' }) => void;
+    classData?: NewMemberClass | null;
 }
 
-const NewMemberClassModal: React.FC<NewMemberClassModalProps> = ({ isOpen, onClose, onSave }) => {
+const NewMemberClassModal: React.FC<NewMemberClassModalProps> = ({ isOpen, onClose, onSave, classData }) => {
     const [name, setName] = useState('');
     const [startDate, setStartDate] = useState('');
+    const [status, setStatus] = useState<'Em Andamento' | 'Concluída' | 'Cancelada'>('Em Andamento');
+
+    useEffect(() => {
+        if (classData) {
+            setName(classData.name);
+            setStartDate(classData.startDate);
+            setStatus(classData.status || 'Em Andamento');
+        } else {
+            setName('');
+            setStartDate('');
+            setStatus('Em Andamento');
+        }
+    }, [classData, isOpen]);
 
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ name, startDate });
-        setName('');
-        setStartDate('');
+        onSave({ name, startDate, status });
         onClose();
     };
 
@@ -26,7 +38,9 @@ const NewMemberClassModal: React.FC<NewMemberClassModalProps> = ({ isOpen, onClo
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900">Nova Turma de Novos Membros</h2>
+                    <h2 className="text-xl font-bold text-gray-900">
+                        {classData ? 'Editar Turma' : 'Nova Turma de Novos Membros'}
+                    </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X size={24} />
                     </button>
@@ -60,9 +74,24 @@ const NewMemberClassModal: React.FC<NewMemberClassModalProps> = ({ isOpen, onClo
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Serão geradas automaticamente 8 aulas semanais a partir desta data.
-                        </p>
+                        {!classData && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Serão geradas automaticamente 8 aulas semanais a partir desta data.
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status da Turma</label>
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as any)}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-800 transition-all"
+                        >
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
                     </div>
 
                     <div className="pt-4 flex gap-3 justify-end">
@@ -77,7 +106,7 @@ const NewMemberClassModal: React.FC<NewMemberClassModalProps> = ({ isOpen, onClo
                             type="submit"
                             className="px-6 py-2 bg-holly-700 text-white rounded-lg font-bold hover:bg-holly-800 transition-colors shadow-lg"
                         >
-                            Criar Turma
+                            {classData ? 'Salvar Alterações' : 'Criar Turma'}
                         </button>
                     </div>
                 </form>

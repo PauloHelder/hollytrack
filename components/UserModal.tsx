@@ -11,6 +11,27 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user }) => {
+    // TODO: Get actual current user role from auth context or state
+    const currentUserRole = 'Pastor'; // Mocked as Pastor (Admin) for now
+
+    const getAvailableRoles = (currentRole: string) => {
+        switch (currentRole) {
+            case 'Pastor':
+            case 'Admin':
+                return ['Pastor', 'Supervisor', 'Líder', 'Conselheiro', 'Líder de Novos Membros', 'Membro'];
+            case 'Supervisor':
+                return ['Líder', 'Líder de Novos Membros', 'Membro'];
+            case 'Líder':
+                return ['Líder de Novos Membros', 'Membro'];
+            case 'Líder de Novos Membros':
+                return ['Membro'];
+            default:
+                return [];
+        }
+    };
+
+    const availableRoles = getAvailableRoles(currentUserRole);
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -46,9 +67,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user }) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Exclude password from the object passed to onSave if needed, or handle it in backend
-        const { password, ...userData } = formData;
-        onSave(userData);
+        // Pass password too, even if it's not in the UserType strictly (we will cast it in parent)
+        onSave({ ...formData });
         onClose();
     };
 
@@ -119,12 +139,9 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSave, user }) 
                                     value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value })}
                                 >
-                                    <option value="Pastor">Pastor</option>
-                                    <option value="Supervisor">Supervisor</option>
-                                    <option value="Líder">Líder</option>
-                                    <option value="Conselheiro">Conselheiro</option>
-                                    <option value="Membro">Membro</option>
-                                    <option value="Admin">Admin</option>
+                                    {availableRoles.map(role => (
+                                        <option key={role} value={role}>{role}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

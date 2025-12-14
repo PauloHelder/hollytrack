@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UsersRound, User, MapPin, Clock, Calendar, Users } from 'lucide-react';
 import { DiscipleshipGroup } from '../types';
+import { useMembers } from '../hooks/useMembers';
 
 interface DiscipleshipModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface DiscipleshipModalProps {
 }
 
 const DiscipleshipModal: React.FC<DiscipleshipModalProps> = ({ isOpen, onClose, onSave, group }) => {
+    const { members, fetchMembers } = useMembers(); // Use member hook
     const [formData, setFormData] = useState({
         name: '',
         leader: '',
@@ -20,6 +22,12 @@ const DiscipleshipModal: React.FC<DiscipleshipModalProps> = ({ isOpen, onClose, 
         membersCount: 0,
         targetAudience: ''
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMembers(); // Load members when modal opens
+        }
+    }, [isOpen, fetchMembers]);
 
     useEffect(() => {
         if (group) {
@@ -87,13 +95,19 @@ const DiscipleshipModal: React.FC<DiscipleshipModalProps> = ({ isOpen, onClose, 
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
+                                list="group-leaders-list"
                                 type="text"
                                 required
                                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                placeholder="Nome do líder"
+                                placeholder="Pesquise por um membro..."
                                 value={formData.leader}
                                 onChange={e => setFormData({ ...formData, leader: e.target.value })}
                             />
+                            <datalist id="group-leaders-list">
+                                {members.filter(m => m.status === 'Ativo').map(member => (
+                                    <option key={member.id} value={member.name} />
+                                ))}
+                            </datalist>
                         </div>
                     </div>
 
@@ -149,30 +163,21 @@ const DiscipleshipModal: React.FC<DiscipleshipModalProps> = ({ isOpen, onClose, 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Participantes</label>
-                            <div className="relative">
-                                <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                    value={formData.membersCount}
-                                    onChange={e => setFormData({ ...formData, membersCount: parseInt(e.target.value) || 0 })}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Público Alvo</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                placeholder="Ex: Jovens, Casais"
-                                value={formData.targetAudience}
-                                onChange={e => setFormData({ ...formData, targetAudience: e.target.value })}
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Público Alvo</label>
+                        <select
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500 bg-white"
+                            value={formData.targetAudience}
+                            onChange={e => setFormData({ ...formData, targetAudience: e.target.value })}
+                        >
+                            <option value="">Selecione</option>
+                            <option value="Adultos">Adultos</option>
+                            <option value="Homens">Homens</option>
+                            <option value="Mulheres">Mulheres</option>
+                            <option value="Jovens">Jovens</option>
+                            <option value="Adolescentes">Adolescentes</option>
+                            <option value="Crianças">Crianças</option>
+                        </select>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

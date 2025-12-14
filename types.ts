@@ -1,6 +1,6 @@
 
 export interface Member {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   avatar: string;
@@ -11,7 +11,7 @@ export interface Member {
 }
 
 export interface User {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   role: string;
@@ -26,13 +26,12 @@ export interface NewConvert {
   email: string;
   phone: string;
   conversionDate: string;
-  mentor: string;
   status: 'Acompanhamento' | 'Batizado' | 'Integrado';
   avatar: string;
 }
 
 export interface DiscipleshipGroup {
-  id: number;
+  id: string | number;
   name: string;
   leader: string;
   meetingDay: string;
@@ -60,8 +59,12 @@ export interface Report {
 }
 
 export enum UserRole {
-  ADMIN = 'Admin',
-  USER = 'User'
+  PASTOR = 'Pastor',
+  SUPERVISOR = 'Supervisor',
+  LIDER = 'Líder',
+  LIDER_NOVOS_MEMBROS = 'Líder de Novos Membros',
+  MEMBRO = 'Membro',
+  ADMIN = 'Admin'
 }
 
 export interface StatCardProps {
@@ -69,4 +72,21 @@ export interface StatCardProps {
   value: string;
   change: string;
   isPositive: boolean;
+}
+
+export interface ClassLesson {
+  id: number;
+  title: string;
+  date: string;
+  completed: boolean;
+  attendanceCount: number;
+}
+
+export interface NewMemberClass {
+  id: number;
+  name: string;
+  startDate: string;
+  status: 'Em Andamento' | 'Concluída' | 'Cancelada';
+  lessons: ClassLesson[];
+  students: Member[];
 }

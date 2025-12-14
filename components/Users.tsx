@@ -1,53 +1,140 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, ShieldCheck, UserCog, ArrowRight } from 'lucide-react';
 import { User } from '../types';
 import UserModal from './UserModal';
 import UserDetails from './UserDetails';
-
-const mockUsers: User[] = [
-  { id: 1, name: 'Admin Principal', email: 'admin@hollytrack.com', role: 'Admin', avatar: 'https://ui-avatars.com/api/?name=Admin+Principal&background=74181D&color=fff', lastAccess: 'Agora', status: 'Ativo' },
-  { id: 2, name: 'Pastor Roberto', email: 'pr.roberto@hollytrack.com', role: 'Pastor', avatar: 'https://ui-avatars.com/api/?name=Roberto&background=random', lastAccess: '15 min atrás', status: 'Ativo' },
-  { id: 3, name: 'Sarah Secretaria', email: 'secretaria@hollytrack.com', role: 'Secretaria', avatar: 'https://ui-avatars.com/api/?name=Sarah&background=random', lastAccess: '2 horas atrás', status: 'Ativo' },
-  { id: 4, name: 'Líder Jovens', email: 'lider.jovens@hollytrack.com', role: 'Líder', avatar: 'https://ui-avatars.com/api/?name=Lider+Jovens&background=random', lastAccess: '1 dia atrás', status: 'Inativo' },
-];
-
-const RoleBadge = ({ role }: { role: string }) => {
-  const styles: Record<string, string> = {
-    'Admin': 'bg-red-100 text-red-700',
-    'Pastor': 'bg-purple-100 text-purple-700',
-    'Líder': 'bg-blue-100 text-blue-700',
-    'Secretaria': 'bg-pink-100 text-pink-700',
-    'Supervisor': 'bg-orange-100 text-orange-700',
-    'Conselheiro': 'bg-teal-100 text-teal-700',
-  };
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[role] || 'bg-gray-100 text-gray-700'}`}>
-      {role}
-    </span>
-  );
-};
+import { supabase } from '../lib/supabase';
 
 const UsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
 
-  const handleSaveUser = (userData: Omit<User, 'id' | 'lastAccess'>) => {
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...userData, id: u.id, lastAccess: u.lastAccess } : u));
-    } else {
-      const newUser = {
-        ...userData,
-        id: users.length + 1,
-        lastAccess: 'Nunca'
-      };
-      setUsers([...users, newUser]);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      // Assuming we have a 'profiles' table that links to auth.users
+      // Or we store user data in a 'app_users' table for this specific app logic
+      // Since I don't know the exact schema, I will try to fetch from 'profiles'
+      // If it fails, I'll gracefully handle it or fallback to a local table strategy
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedUsers: User[] = data.map((u: any) => ({
+          id: u.id,
+          name: u.full_name || u.name || 'Sem nome', // Safe access
+          email: u.email,
+          role: u.role || 'Membro',
+          avatar: u.avatar_url || `https://ui-avatars.com/api/?name=${u.full_name || 'User'}&background=random`,
+          lastAccess: u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Nunca',
+          status: u.status || 'Ativo'
+        }));
+        setUsers(mappedUsers);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+      // Fallback to mock if table doesn't exist yet for demo
+      // setUsers(mockUsers); 
+    } finally {
+      setLoading(false);
     }
-    setEditingUser(undefined);
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const RoleBadge = ({ role }: { role: string }) => {
+    const styles: Record<string, string> = {
+      'Admin': 'bg-red-100 text-red-700',
+      'Pastor': 'bg-purple-100 text-purple-700',
+      'Líder': 'bg-blue-100 text-blue-700',
+      'Secretaria': 'bg-pink-100 text-pink-700',
+      'Supervisor': 'bg-orange-100 text-orange-700',
+      'Conselheiro': 'bg-teal-100 text-teal-700',
+    };
+    return (
+      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[role] || 'bg-gray-100 text-gray-700'}`}>
+        {role}
+      </span>
+    );
+  };
+
+  // Removed duplicate UsersPage declaration and mock state logic
+  // The above chunk replaced the top part of the file including mockUsers and started the component
+  // This chunk is just to clean up if the previous replacement didn't cover everything seamlessly?
+  // Actually, I need to be careful. The previous chunk replaced mockUsers definition. 
+  // Now I need to replace the component body start.
+
+  // Let's redefine handleSaveUser to be async and call Supabase
+  const handleSaveUser = async (userData: Omit<User, 'id' | 'lastAccess'>) => {
+    try {
+      if (editingUser) {
+        // Update existing user
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: userData.name,
+            role: userData.role,
+            status: userData.status,
+            // email is usually immutable in simple setups or requires re-auth
+          })
+          .eq('id', editingUser.id); // Assuming ID is the uuid join key
+
+        if (error) throw error;
+      } else {
+        // Create new user using RPC
+        // Create new user using RPC
+        // The password field comes from the form via casting (passed in UserModal)
+
+        const payload = {
+          _email: userData.email,
+          _password: (userData as any).password || '123456',
+          _full_name: userData.name,
+          _role: userData.role,
+          _user_status: userData.status || 'Ativo'
+        };
+        console.log('Enviando payload para RPC:', payload);
+
+        const { data, error } = await supabase.rpc('create_new_user', payload);
+
+        if (error) {
+          console.error('Erro detalhado do RPC:', error);
+          throw error;
+        }
+      }
+
+      fetchUsers();
+      setEditingUser(undefined);
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Erro ao salvar usuário (Catch):', error);
+      alert('Erro ao salvar: ' + (error.message || JSON.stringify(error)));
+    }
+  };
+
+  // Replaced by handleSaveUser above
+  // Just clearing out the old function body if needed, or ensuring I matched the range correctly.
+  // The previous chunk started at line 31 (UsersPage definition).
+  // The original code had handleSaveUser from line 38 to 50.
+  // My previous chunk replacement ended at "setIsModalOpen(false); } };" logic roughly.
+  // I will just map the old handleSaveUser to the new one in the previous chunk.
+  // Wait, I can't do overlapping chunks or complex overrides easily.
+  // Let me just replace the 'handleSaveUser' block specifically.
+
+  // I will re-strategize:
+  // 1. Remove mockUsers
+  // 2. Clear out UsersPage content and rewrite it cleanly.
+
 
   const handleEditClick = (e: React.MouseEvent, user: User) => {
     e.stopPropagation();

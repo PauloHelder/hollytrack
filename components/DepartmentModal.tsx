@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Building2, User, Users, AlignLeft, Calendar } from 'lucide-react';
+import { X, Building2, User, AlignLeft, Search } from 'lucide-react';
 import { Department } from '../types';
+import { useMembers } from '../hooks/useMembers';
 
 interface DepartmentModalProps {
     isOpen: boolean;
@@ -11,33 +12,31 @@ interface DepartmentModalProps {
 }
 
 const DepartmentModal: React.FC<DepartmentModalProps> = ({ isOpen, onClose, onSave, department }) => {
+    const { members, fetchMembers } = useMembers();
     const [formData, setFormData] = useState({
         name: '',
         leader: '',
-        membersCount: 0,
-        description: '',
-        nextMeeting: '',
-        budget: ''
+        description: ''
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMembers(); // Ensure we have the latest list of members
+        }
+    }, [isOpen, fetchMembers]);
 
     useEffect(() => {
         if (department) {
             setFormData({
                 name: department.name,
                 leader: department.leader,
-                membersCount: department.membersCount,
-                description: department.description,
-                nextMeeting: department.nextMeeting,
-                budget: department.budget || ''
+                description: department.description
             });
         } else {
             setFormData({
                 name: '',
                 leader: '',
-                membersCount: 0,
-                description: '',
-                nextMeeting: '',
-                budget: ''
+                description: ''
             });
         }
     }, [department, isOpen]);
@@ -46,7 +45,13 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ isOpen, onClose, onSa
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        // Preserving existing fields like membersCount if we are editing, or default 0 for new
+        onSave({
+            ...formData,
+            membersCount: department?.membersCount || 0,
+            nextMeeting: department?.nextMeeting || '',
+            budget: department?.budget || ''
+        });
         onClose();
     };
 
@@ -84,47 +89,25 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ isOpen, onClose, onSa
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
+                                list="members-list"
                                 type="text"
                                 required
                                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                placeholder="Nome do líder"
+                                placeholder="Pesquise por um membro..."
                                 value={formData.leader}
                                 onChange={e => setFormData({ ...formData, leader: e.target.value })}
                             />
+                            <datalist id="members-list">
+                                {members.filter(m => m.status === 'Ativo').map(member => (
+                                    <option key={member.id} value={member.name} />
+                                ))}
+                            </datalist>
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Membros Atuais</label>
-                            <div className="relative">
-                                <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                    value={formData.membersCount}
-                                    onChange={e => setFormData({ ...formData, membersCount: parseInt(e.target.value) || 0 })}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Próxima Reunião</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-holly-500"
-                                    placeholder="Ex: Seg, 19h"
-                                    value={formData.nextMeeting}
-                                    onChange={e => setFormData({ ...formData, nextMeeting: e.target.value })}
-                                />
-                            </div>
-                        </div>
+                        <p className="text-xs text-gray-500">Selecione um membro ativo da lista para liderar este departamento.</p>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Descrição</label>
+                        <label className="text-sm font-medium text-gray-700">Descrição <span className="text-gray-400 font-normal">(Opcional)</span></label>
                         <div className="relative">
                             <AlignLeft className="absolute left-3 top-3 text-gray-400" size={18} />
                             <textarea

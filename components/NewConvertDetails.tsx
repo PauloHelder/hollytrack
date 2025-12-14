@@ -58,6 +58,7 @@ const NewConvertDetails: React.FC<NewConvertDetailsProps> = ({ convert, onBack, 
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
                         <div className="space-y-6">
                             <div>
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Contato</h3>
@@ -66,7 +67,7 @@ const NewConvertDetails: React.FC<NewConvertDetailsProps> = ({ convert, onBack, 
                                         <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                                             <Mail size={16} />
                                         </div>
-                                        <span className="font-medium">{convert.email}</span>
+                                        <span className="font-medium">{convert.email || 'Não informado'}</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-gray-700">
                                         <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
@@ -74,22 +75,6 @@ const NewConvertDetails: React.FC<NewConvertDetailsProps> = ({ convert, onBack, 
                                         </div>
                                         <span className="font-medium">{convert.phone}</span>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Acompanhamento</h3>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                        {convert.mentor.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">{convert.mentor}</p>
-                                        <p className="text-xs text-gray-500">Conselheiro Responsável</p>
-                                    </div>
-                                </div>
-                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-sm text-yellow-800">
-                                    Próximo passo sugerido: <strong>Batismo nas águas</strong>.
                                 </div>
                             </div>
                         </div>

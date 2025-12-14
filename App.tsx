@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -13,14 +13,29 @@ import NewMembers from './components/NewMembers';
 import Discipleships from './components/Discipleships';
 import Departments from './components/Departments';
 import Settings from './components/Settings';
-
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ClassRegistration from './components/ClassRegistration';
+import ClassRegistrationPage from './components/ClassRegistrationPage';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const isLoginPage = location.pathname === '/' || location.pathname === '/login';
-  const isRegistrationPage = location.pathname.startsWith('/register/');
+  const isRegistrationPage = location.pathname.startsWith('/register/') || location.pathname === '/inscricao-novos-membros';
 
   if (isLoginPage || isRegistrationPage) {
     return <>{children}</>;
@@ -41,26 +56,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App = () => {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/departments" element={<Departments />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/new-converts" element={<NewConverts />} />
-          <Route path="/new-members" element={<NewMembers />} />
-          <Route path="/discipleships" element={<Discipleships />} />
-          <Route path="/communications" element={<Communications />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/register/class/:classId" element={<ClassRegistration />} />
-          <Route path="*" element={<div className="p-8 text-center text-gray-500">Página em construção</div>} />
-        </Routes>
-      </Layout>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
+            <Route path="/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+            <Route path="/new-converts" element={<ProtectedRoute><NewConverts /></ProtectedRoute>} />
+            <Route path="/new-members" element={<ProtectedRoute><NewMembers /></ProtectedRoute>} />
+            <Route path="/discipleships" element={<ProtectedRoute><Discipleships /></ProtectedRoute>} />
+            <Route path="/communications" element={<ProtectedRoute><Communications /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/register/class/:classId" element={<ClassRegistration />} />
+            <Route path="/inscricao-novos-membros" element={<ClassRegistrationPage />} />
+            <Route path="*" element={<div className="p-8 text-center text-gray-500">404 - Página não encontrada</div>} />
+          </Routes>
+        </Layout>
+      </Router>
+    </AuthProvider>
   );
 };
 

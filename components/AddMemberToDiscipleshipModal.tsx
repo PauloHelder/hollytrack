@@ -1,36 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Search, Check } from 'lucide-react';
-import { Member } from '../types';
+import { useMembers } from '../hooks/useMembers';
 
 interface AddMemberToDiscipleshipModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (selectedMemberIds: number[]) => void;
+    onAdd: (selectedMemberIds: (string | number)[]) => void;
 }
 
-// Mock members data - in a real app this would come from an API or context
-const MOCK_MEMBERS: Member[] = [
-    { id: 1, name: 'João Silva', email: 'joao@email.com', avatar: 'https://i.pravatar.cc/150?u=1', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-    { id: 2, name: 'Maria Santos', email: 'maria@email.com', avatar: 'https://i.pravatar.cc/150?u=2', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-    { id: 3, name: 'Pedro Oliveira', email: 'pedro@email.com', avatar: 'https://i.pravatar.cc/150?u=3', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-    { id: 4, name: 'Ana Costa', email: 'ana@email.com', avatar: 'https://i.pravatar.cc/150?u=4', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-    { id: 5, name: 'Lucas Pereira', email: 'lucas@email.com', avatar: 'https://i.pravatar.cc/150?u=5', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-    { id: 6, name: 'Carla Souza', email: 'carla@email.com', avatar: 'https://i.pravatar.cc/150?u=6', phone: '11999999999', groups: [], joinDate: '2023-01-01', status: 'Ativo' },
-];
-
 const AddMemberToDiscipleshipModal: React.FC<AddMemberToDiscipleshipModalProps> = ({ isOpen, onClose, onAdd }) => {
+    const { members, fetchMembers } = useMembers();
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+    const [selectedMembers, setSelectedMembers] = useState<(string | number)[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMembers();
+            setSelectedMembers([]);
+            setSearchTerm('');
+        }
+    }, [isOpen, fetchMembers]);
 
     if (!isOpen) return null;
 
-    const filteredMembers = MOCK_MEMBERS.filter(member =>
+    const filteredMembers = members.filter(member =>
         member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const toggleMemberSelection = (memberId: number) => {
+    const toggleMemberSelection = (memberId: string | number) => {
         if (selectedMembers.includes(memberId)) {
             setSelectedMembers(selectedMembers.filter(id => id !== memberId));
         } else {
@@ -40,8 +39,6 @@ const AddMemberToDiscipleshipModal: React.FC<AddMemberToDiscipleshipModalProps> 
 
     const handleConfirm = () => {
         onAdd(selectedMembers);
-        setSelectedMembers([]);
-        setSearchTerm('');
         onClose();
     };
 

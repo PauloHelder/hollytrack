@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Check, Search, User } from 'lucide-react';
-import { Member } from '../types';
-import { ClassLesson } from './NewMemberClassDetails';
+import { Member, ClassLesson } from '../types';
 
 interface NewMemberAttendanceModalProps {
     isOpen: boolean;
@@ -12,7 +11,7 @@ interface NewMemberAttendanceModalProps {
     students: Member[];
 }
 
-const NewMemberAttendanceModal: React.FC<NewMemberAttendanceModalProps> = ({ isOpen, onClose, onSave, lesson, students }) => {
+const NewMemberAttendanceModal: React.FC<NewMemberAttendanceModalProps> = ({ isOpen, onClose, onSave, lesson, students = [] }) => {
     const [presentStudentIds, setPresentStudentIds] = useState<number[]>([]);
     const [summaryDoneStudentIds, setSummaryDoneStudentIds] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -58,8 +57,8 @@ const NewMemberAttendanceModal: React.FC<NewMemberAttendanceModalProps> = ({ isO
         onClose();
     };
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredStudents = (students || []).filter(s =>
+        s && s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -67,7 +66,7 @@ const NewMemberAttendanceModal: React.FC<NewMemberAttendanceModalProps> = ({ isO
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-2xl">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Registrar Presença</h2>
+                        <h2 className="text-xl font-bold text-gray-900">Registrar Frequência</h2>
                         <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                             <Calendar size={14} />
                             {lesson.title} - {new Date(lesson.date).toLocaleDateString()}
@@ -166,7 +165,7 @@ const NewMemberAttendanceModal: React.FC<NewMemberAttendanceModalProps> = ({ isO
                             onClick={handleSave}
                             className="px-6 py-2 bg-holly-700 text-white rounded-lg font-bold hover:bg-holly-800 transition-colors shadow-lg"
                         >
-                            Salvar Presença
+                            Salvar Frequência
                         </button>
                     </div>
                 </div>
